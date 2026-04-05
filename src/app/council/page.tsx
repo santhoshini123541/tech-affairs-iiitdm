@@ -16,37 +16,12 @@ import { styled, useTheme } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const clubs = [
-  { name: "CS Club", image: "/clubs/csclub/logo.webp", link: "/clubs/cs" },
-  { name: "Developer's Club", image: "/clubs/devclub/logo.png", link: "/clubs/dev" },
-  { name: "System Coding Club", image: "/clubs/Scc/logo.webp", link: "/clubs/scc" },
-  { name: "Robotics", image: "/clubs/robotics/logo.webp", link: "/clubs/robotics" },
-];
-
-const teams = [
-  { name: "MaRS (Shunya)", image: "/teams/mars/logo.webp", link: "/teams/shunya" },
-  { name: "AUV (Nira)", image: "/teams/nira/logo.webp", link: "/teams/nira" },
-  { name: "Revolt Racers", image: "/teams/revolt/logo.webp", link: "/teams/revolt" },
-  { name: "Astra", image: "/teams/astra/logo.webp", link: "/teams/astra" },
-  { name: "TAD", image: "/teams/tad/logo.webp", link: "/teams/tad" },
-];
-
-const societies = [
-  { name: "E-Cell", image: "/societies/Ecell/logo.webp", link: "/clubs/ecell" },
-  { name: "IEEE", image: "/societies/IEEE/logo.webp", link: "/societies/ieee" },
-  { name: "Optica Student Chapter", image: "/societies/OpticaStudentChapter/logo.webp", link: "/societies/optica" },
-  { name: "ASME Student Section", image: "/societies/ASMEStudentSection/logo.webp", link: "/societies/asme" },
-];
-
-const communities = [
-  { name: "Cybersecurity", image: "/communities/Cybersecurity/logo.webp", link: "/communities/cybersecurity" },
-  { name: "Game Developers", image: "/communities/gamedevelopers/logo.png", link: "/communities/gamedevelopers" },
-];
+import { clubs, teams, societies, communities } from "@/data/orgs";
 
 const tabOptions = [
-  { label: "Clubs", data: clubs, route: "clubs", color: "#f472b6" },
-  { label: "Teams", data: teams, route: "teams", color: "#34d399" },
-  { label: "Societies", data: societies, route: "societies", color: "#a78bfa" },
+  { label: "Clubs",       data: clubs,       route: "clubs",       color: "#f472b6" },
+  { label: "Teams",       data: teams,       route: "teams",       color: "#34d399" },
+  { label: "Societies",   data: societies,   route: "societies",   color: "#a78bfa" },
   { label: "Communities", data: communities, route: "communities", color: "#38bdf8" },
 ];
 

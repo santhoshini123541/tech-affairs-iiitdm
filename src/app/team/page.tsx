@@ -31,119 +31,13 @@ import Image from "next/image";
 import { Tabs, Tab, useMediaQuery } from "@mui/material";
 import { usePathname } from "next/navigation";
 
-// Team member data
-const teamData = {
-  secretary: {
-    name: "P Kaarthick Natesh",
-    position: "Technical Affairs Secretary",
-    image: "/technical-affairs-team/sac/PKaarthickNatesh.webp",
-    email: "ec22b1004@iiitdm.ac.in",
-    linkedin: "",
-  },
-  jointSecretary: {
-    name: "Ranveer Gautam",
-    position: "Technical Affairs Joint Secretary",
-    image: "/technical-affairs-team/sac/RanveerGautam.webp",
-    email: "me23b2031@iiitdm.ac.in",
-    linkedin: "",
-  },
-};
-
-const socialMediaLinks = {
-  instagram: "https://www.instagram.com/iiitdm.technical/",
-  linkedin: "https://www.linkedin.com/company/technical-affairs-iiitdm/",
-  youtube: "https://www.youtube.com/@iiitdm.technical",
-};
-
-const facultyHeads = [
-  {
-    name: "Prof. M D Selvaraj",
-    role: "Dean DII",
-    image: "/facultyheads/selvaraj.webp",
-  },
-  {
-    name: "Dr. Vikash Kumar",
-    role: "PIC - Technical Affairs",
-    image: "/facultyheads/vikash.webp",
-  },
-  {
-    name: "Dr. Bhukya Krishna Priya",
-    role: "PIC - Technical Affairs",
-    image: "/facultyheads/krishnapriya.webp",
-  },
-];
-
-const clubs = [
-  { name: "CS Club", image: "/clubs/csclub/logo.webp", link: "/clubs/cs" },
-  {
-    name: "Developer's Club",
-    image: "/clubs/devclub/logo.png",
-    link: "/clubs/dev",
-  },
-  {
-    name: "System Coding Club",
-    image: "/clubs/Scc/logo.webp",
-    link: "/clubs/scc",
-  },
-  {
-    name: "Robotics",
-    image: "/clubs/robotics/logo.webp",
-    link: "/clubs/robotics",
-  },
-  {
-    name: "Cybersecurity",
-    image: "/clubs/cybersecurity/logo.jpg",
-    link: "/clubs/cybersecurity",
-  },
-];
-
-const teams = [
-  {
-    name: "MaRS (Shunya)",
-    image: "/teams/mars/logo.webp",
-    link: "/teams/shunya",
-  },
-  { name: "AUV (Nira)", image: "/teams/nira/logo.webp", link: "/teams/nira" },
-  {
-    name: "Revolt Racers",
-    image: "/teams/revolt/logo.webp",
-    link: "/teams/revolt",
-  },
-  { name: "Astra", image: "/teams/astra/logo.webp", link: "/teams/astra" },
-  { name: "TAD", image: "/teams/tad/logo.webp", link: "/teams/tad" },
-];
-
-const societies = [
-  {
-    name: "E-Cell",
-    image: "/societies/Ecell/logo.webp",
-    link: "/societies/ecell",
-  },
-  { name: "IEEE", image: "/societies/IEEE/logo.webp", link: "/societies/ieee" },
-  {
-    name: "Optica Student Chapter",
-    image: "/societies/OpticaStudentChapter/logo.webp",
-    link: "/societies/optica",
-  },
-  {
-    name: "ASME Student Section",
-    image: "/societies/ASMEStudentSection/logo.webp",
-    link: "/societies/asme",
-  },
-];
-
-const communities = [
-  {
-    name: "Game Developers",
-    image: "/communities/gamedevelopers/logo.png",
-    link: "/communities/gamedevelopers",
-  },
-];
+import { teamData, socialMediaLinks, facultyHeads, coreTeams } from "@/data/team";
+import { clubs, teams, societies, communities } from "@/data/orgs";
 
 const tabOptions = [
-  { label: "Clubs", data: clubs, route: "clubs" },
-  { label: "Teams", data: teams, route: "teams" },
-  { label: "Societies", data: societies, route: "societies" },
+  { label: "Clubs",       data: clubs,       route: "clubs" },
+  { label: "Teams",       data: teams,       route: "teams" },
+  { label: "Societies",   data: societies,   route: "societies" },
   { label: "Communities", data: communities, route: "communities" },
 ];
 
@@ -465,13 +359,7 @@ function Committee() {
           Our Core Teams
         </Typography>
         <Grid container spacing={{ xs: 1, sm: 2 }} justifyContent="center">
-          {[
-            { label: "Management", path: "/team/management" },
-            { label: "Tech Development", path: "/team/tech-development" },
-            { label: "Innovation", path: "/team/innovation" },
-            { label: "Social Outreach", path: "/team/social-outreach" },
-            { label: "Media and Marketing", path: "/team/media-and-marketing" },
-          ].map((team) => (
+          {coreTeams.map((team) => (
             <Grid
               item
               xs={6}

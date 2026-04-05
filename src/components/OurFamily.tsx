@@ -8,67 +8,7 @@ import {
   CardMedia,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-
-const clubs = [
-  {
-    name: 'CS Club',
-    image: '/clubs/csclub/logo.webp',
-    link: '/clubs/cs',
-  },
-  {
-    name: 'Developers Club',
-    image: '/clubs/devclub/logo.png',
-    link: '/clubs/dev',
-  },
-  {
-    name: 'Robotics Club',
-    image: '/clubs/robotics/logo.webp',
-    link: '/clubs/robotics',
-  },
-  {
-    name: 'E-Cell',
-    image: '/societies/Ecell/logo.webp',
-    link: '/societies/Ecell',
-  },
-  {
-    name: 'System Coding Club',
-    image: '/clubs/Scc/logo1.webp',
-    link: '/clubs/scc',
-  },
-];
-
-const teams = [
-  {
-    name: 'Team Nira',
-    description: 'AUV Society',
-    image: '/teams/nira/logo.webp',
-    link: '/teams/nira',
-  },
-  {
-    name: 'Team Astra',
-    description: 'Space Technology',
-    image: '/teams/astra/logo.webp',
-    link: '/teams/astra',
-  },
-  {
-    name: 'Revolt Racers',
-    description: 'SAE E-Baja',
-    image: '/teams/revolt/logo.webp',
-    link: '/teams/revolt',
-  },
-  {
-    name: 'Team TAD',
-    description: 'Aero Design',
-    image: '/teams/tad/logo.webp',
-    link: '/teams/tad',
-  },
-  {
-    name: 'Team Shunya (MaRS)',
-    description: 'Mars Rover',
-    image: '/teams/mars/logo.webp',
-    link: '/teams/shunya',
-  },
-];
+import { clubs, teams } from '@/data/orgs';
 
 const OurFamily = () => {
   const [activeTab, setActiveTab] = useState(0);

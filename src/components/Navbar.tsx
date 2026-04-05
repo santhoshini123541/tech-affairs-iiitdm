@@ -45,14 +45,7 @@ interface NavbarProps {
   user: User | null;
 }
 
-const navItems = [
-  { name: "Achievements", path: "/achievements" },
-  { name: "Open House", path: "/open-house" },
-  { name: "I2R Lab", path: "/i2r" },
-  { name: "Our Team", path: "/team" },
-  { name: "Frost", path: "/frost" },
-  { name: "Recruitments", path: "/recruitments" },
-];
+import { navItems } from "@/data/navigation";
 
 const Navbar = ({ user }: NavbarProps) => {
   const theme = useMuiTheme();
