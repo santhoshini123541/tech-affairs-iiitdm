@@ -9,6 +9,7 @@ import {
 import {
   Event as EventIcon,
   EmojiEvents as TrophyIcon,
+  Campaign as CampaignIcon,
   Home as HomeIcon,
   Logout as LogoutIcon,
   Menu as MenuIcon,
@@ -16,6 +17,7 @@ import {
 } from '@mui/icons-material';
 import EventsTab from './EventsTab';
 import AchievementsTab from './AchievementsTab';
+import AnnouncementsTab from './AnnouncementsTab';
 import { clubs, teams, societies, communities } from '@/data/orgs';
 import type { OrgItem } from '@/data/orgs';
 
@@ -23,8 +25,9 @@ const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED = 72;
 
 const NAV_ITEMS = [
-  { label: 'Events',       icon: <EventIcon /> },
-  { label: 'Achievements', icon: <TrophyIcon /> },
+  { label: 'Events',        icon: <EventIcon /> },
+  { label: 'Achievements',  icon: <TrophyIcon /> },
+  { label: 'Announcements', icon: <CampaignIcon /> },
 ];
 
 function resolveOrg(slug: string): OrgItem | null {
@@ -253,6 +256,7 @@ export default function OrgAdminPage() {
         <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, overflowY: 'auto' }}>
           {tab === 0 && <EventsTab clubId={0} />}
           {tab === 1 && <AchievementsTab orgSlugs={user.orgSlugs} />}
+          {tab === 2 && <AnnouncementsTab orgSlugs={user.orgSlugs} />}
         </Box>
       </Box>
     </Box>

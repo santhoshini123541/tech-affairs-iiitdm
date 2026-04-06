@@ -87,6 +87,16 @@ export const OrgAdmins = pgTable('org_admins', {
     org_slug: text('org_slug').notNull(), // e.g. 'cs', 'nira', 'ieee'
 });
 
+export const Announcements = pgTable('announcements', {
+    id: serial('id').primaryKey().notNull(),
+    org_slug: text('org_slug').notNull(),
+    title: varchar('title').notNull(),
+    body: text('body').notNull(),
+    link: text('link').default(''),
+    active: char('active', { length: 1 }).notNull().default('Y'), // Y = visible, N = hidden
+    created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Achievements managed via the org-admin / super-admin dashboard.
 // Replaces / extends the static src/data/achievements.ts for dynamically-added entries.
 export const Achievements = pgTable('achievements', {
