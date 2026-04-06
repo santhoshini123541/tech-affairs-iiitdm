@@ -4,7 +4,7 @@ import { getCurrentSession } from '@/lib/server/session';
 export async function GET() {
   try {
     const { session, user } = await getCurrentSession();
-    
+
     if (!session || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -13,7 +13,9 @@ export async function GET() {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      picture: user.picture,
+      role: user.role,
+      orgSlugs: user.orgSlugs,
     });
   } catch (error) {
     console.error('Error getting user session:', error);

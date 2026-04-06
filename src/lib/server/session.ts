@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { Sessions, User_roles, Users } from "@/db/schema"; // Adjust based on your file structure
+import { Sessions, User_roles, Users, OrgAdmins } from "@/db/schema";
 import { encodeBase32, encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { cookies } from "next/headers";
@@ -49,6 +49,15 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 
 	const role = roleRows.length > 0 ? roleRows[0].role : 'U';
 
+	let orgSlugs: string[] = [];
+	if (role === 'O') {
+		const orgRows = await db
+			.select({ org_slug: OrgAdmins.org_slug })
+			.from(OrgAdmins)
+			.where(eq(OrgAdmins.email, row.email));
+		orgSlugs = orgRows.map((r) => r.org_slug);
+	}
+
 	const session: Session = {
 		id: row.sessionId,
 		userId: row.sessionUserId,
@@ -61,7 +70,8 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 		email: row.email,
 		name: row.name,
 		picture: row.picture,
-		role
+		role,
+		orgSlugs,
 	};
 
 	const now = Date.now();

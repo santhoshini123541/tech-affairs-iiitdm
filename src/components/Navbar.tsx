@@ -36,8 +36,9 @@ export interface User {
   email: string;
   googleId: string;
   name: string;
-  picture: string; // This will be used for the Avatar src
-  role: string;
+  picture: string;
+  role: string;       // 'A' = super-admin, 'O' = org-admin, 'U' = user
+  orgSlugs: string[];
 }
 
 // Define the props for the Navbar component
@@ -266,11 +267,35 @@ const Navbar = ({ user }: NavbarProps) => {
                 />
               </ListItemButton>
             )}
+            {user.role === "O" && (
+              <ListItemButton
+                component="a"
+                href="/org-admin"
+                onClick={handleDrawerToggle}
+                sx={{
+                  borderRadius: 2,
+                  py: 1.2,
+                  px: 2,
+                  color: "text.primary",
+                  "&:hover": {
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.04)",
+                  },
+                }}
+              >
+                <ListItemText
+                  primary="Org Dashboard"
+                  primaryTypographyProps={{ fontSize: "0.9rem", fontWeight: 500 }}
+                />
+              </ListItemButton>
+            )}
           </>
         ) : (
           <Button
             component="a"
-            href="/login/google"
+            href="/login"
             onClick={handleDrawerToggle}
             variant="contained"
             fullWidth
@@ -338,6 +363,25 @@ const Navbar = ({ user }: NavbarProps) => {
                 {item.name}
               </Button>
             ))}
+              {user?.role === 'A' && (
+                <Button
+                  component="a"
+                  href="/admin"
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    color: 'primary.main',
+                    borderColor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.main', color: '#fff' },
+                  }}
+                >
+                  Admin
+                </Button>
+              )}
+
               <IconButton
                 onClick={toggleTheme}
                 sx={{
@@ -371,8 +415,13 @@ const Navbar = ({ user }: NavbarProps) => {
                   </MenuItem>
                   <Divider />
                   {user.role === 'A' && (
-                      <MenuItem component="a" href="/admin" onClick={handleCloseUserMenu}>
+                    <MenuItem component="a" href="/admin" onClick={handleCloseUserMenu}>
                       <Typography textAlign="center">Admin</Typography>
+                    </MenuItem>
+                  )}
+                  {user.role === 'O' && (
+                    <MenuItem component="a" href="/org-admin" onClick={handleCloseUserMenu}>
+                      <Typography textAlign="center">Org Dashboard</Typography>
                     </MenuItem>
                   )}
                   <MenuItem component="a" href="/logout" onClick={handleCloseUserMenu}>
@@ -383,7 +432,7 @@ const Navbar = ({ user }: NavbarProps) => {
             ) : (
               <Button
                 component="a"
-                href="/login/google"
+                href="/login"
                 variant="contained"
                 color="primary"
                 sx={{ my: 1, ml: 1.5 }}

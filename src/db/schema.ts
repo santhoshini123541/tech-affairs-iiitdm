@@ -1,7 +1,4 @@
-import { eq } from 'drizzle-orm';
-import { integer, varchar, char, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
-import { link } from 'fs';
-import { start } from 'repl';
+import { integer, varchar, char, pgTable, serial, text, timestamp, primaryKey } from 'drizzle-orm/pg-core';
 
 
 export const Users = pgTable('users', {
@@ -25,6 +22,8 @@ export const Clubs = pgTable('clubs', {
     club_id: serial('club_id').primaryKey().notNull(),
     name: varchar('name').notNull(),
     iconUrl: text('iconUrl').notNull(),
+    authorized_email: text('authorized_email').default(''),
+    org_slug: text('org_slug').default(''),
 });
 
 export const Events = pgTable('events', {
@@ -76,6 +75,28 @@ export const i2r_booking_equipment = pgTable('booking_equipment', {
     equipment_id: integer('equipment_id').notNull().references(() => i2r_equipment.equipment_id),
 
 }, (table) => [
-    eq(table.booking_id, table.equipment_id)
+    primaryKey({ columns: [table.booking_id, table.equipment_id] }),
 ]);
+
+// Maps an email address to one or more org slugs (e.g. 'cs', 'nira', 'ieee').
+// Role 'O' users are looked up here to determine which org dashboard they can access.
+// Super-admins (role 'A') bypass this table entirely.
+export const OrgAdmins = pgTable('org_admins', {
+    id: serial('id').primaryKey().notNull(),
+    email: text('email').notNull(),       // e.g. csclub@iiitdm.ac.in
+    org_slug: text('org_slug').notNull(), // e.g. 'cs', 'nira', 'ieee'
+});
+
+// Achievements managed via the org-admin / super-admin dashboard.
+// Replaces / extends the static src/data/achievements.ts for dynamically-added entries.
+export const Achievements = pgTable('achievements', {
+    id: serial('id').primaryKey().notNull(),
+    org_slug: text('org_slug').notNull(),   // e.g. 'nira', 'cs'
+    title: varchar('title').notNull(),
+    description: text('description').notNull(),
+    year: varchar('year', { length: 4 }).notNull(),
+    proof_url: text('proof_url').default(''),
+    logo: text('logo').default(''),         // optional override; falls back to org logo
+    created_at: timestamp('created_at').defaultNow().notNull(),
+});
 

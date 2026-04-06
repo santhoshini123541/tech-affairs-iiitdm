@@ -2,329 +2,186 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Snackbar,
-  Alert,
-  GridLegacy as Grid,
-  CircularProgress,
-  Card,
-  CardContent,
-  CardActions,
-  CardMedia
+  Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Snackbar, Alert, GridLegacy as Grid, CircularProgress,
+  Card, CardContent, CardActions, CardMedia, Chip,
 } from '@mui/material';
 import { Add, Edit, Delete, Upload } from '@mui/icons-material';
-import Image from 'next/image';
 
 interface Club {
   club_id: number;
   name: string;
   iconUrl: string;
+  authorized_email: string;
+  org_slug: string;
 }
+
+const EMPTY_FORM = { name: '', iconUrl: '', authorized_email: '', org_slug: '' };
 
 export default function ClubsManagement() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialog, setDialog] = useState<{
-    open: boolean;
-    mode: 'add' | 'edit';
-    club: Club | null;
-  }>({
-    open: false,
-    mode: 'add',
-    club: null
+  const [dialog, setDialog] = useState<{ open: boolean; mode: 'add' | 'edit'; club: Club | null }>({
+    open: false, mode: 'add', club: null,
   });
-  const [formData, setFormData] = useState({
-    name: '',
-    iconUrl: ''
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success'
+  const [snack, setSnack] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false, message: '', severity: 'success',
   });
 
-  const fetchClubs = async () => {
-    try {
-      const response = await fetch('/admin/api/clubs');
-      if (response.ok) {
-        const data = await response.json();
-        setClubs(data);
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'Failed to fetch clubs',
-          severity: 'error'
-        });
-      }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Error fetching clubs',
-        severity: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const toast = (message: string, severity: 'success' | 'error' = 'success') =>
+    setSnack({ open: true, message, severity });
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
+  async function fetchClubs() {
+    const res = await fetch('/admin/api/clubs');
+    if (res.ok) setClubs(await res.json());
+    else toast('Failed to fetch clubs', 'error');
+    setLoading(false);
+  }
 
-  const handleAdd = () => {
-    setFormData({
-      name: '',
-      iconUrl: ''
-    });
+  useEffect(() => { fetchClubs(); }, []);
+
+  function openAdd() {
+    setFormData(EMPTY_FORM);
     setImageFile(null);
-    setDialog({
-      open: true,
-      mode: 'add',
-      club: null
-    });
-  };
+    setDialog({ open: true, mode: 'add', club: null });
+  }
 
-  const handleEdit = (club: Club) => {
+  function openEdit(club: Club) {
     setFormData({
       name: club.name,
-      iconUrl: club.iconUrl || ''
+      iconUrl: club.iconUrl || '',
+      authorized_email: club.authorized_email || '',
+      org_slug: club.org_slug || '',
     });
     setImageFile(null);
-    setDialog({
-      open: true,
-      mode: 'edit',
-      club
-    });
-  };
+    setDialog({ open: true, mode: 'edit', club });
+  }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this club?')) return;
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this club? This will also revoke the org admin access for its email.')) return;
+    const res = await fetch(`/admin/api/clubs?club_id=${id}`, { method: 'DELETE' });
+    if (res.ok) { toast('Club deleted'); fetchClubs(); }
+    else toast('Failed to delete', 'error');
+  }
 
-    try {
-      const response = await fetch(`/admin/api/clubs?club_id=${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: 'Club deleted successfully',
-          severity: 'success'
-        });
-        fetchClubs();
-      } else {
-        const errorData = await response.json();
-        setSnackbar({
-          open: true,
-          message: errorData.error || 'Failed to delete club',
-          severity: 'error'
-        });
-      }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Error deleting club',
-        severity: 'error'
-      });
-    }
-  };
-
-  const handleImageUpload = async (clubId: number) => {
+  async function uploadImage(clubId: number): Promise<string | null> {
     if (!imageFile) return null;
-
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', imageFile);
-      formData.append('clubId', clubId.toString());
-
-      const response = await fetch('/admin/api/upload/club', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.url;
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
+      const fd = new FormData();
+      fd.append('file', imageFile);
+      fd.append('clubId', clubId.toString());
+      const res = await fetch('/admin/api/upload/club', { method: 'POST', body: fd });
+      if (res.ok) return (await res.json()).url;
+      throw new Error('Upload failed');
     } finally {
       setUploading(false);
     }
-  };
+  }
 
-  const handleSubmit = async () => {
-    if (!formData.name) {
-      setSnackbar({
-        open: true,
-        message: 'Please fill in all required fields',
-        severity: 'error'
-      });
-      return;
-    }
+  async function handleSubmit() {
+    if (!formData.name) return toast('Club name is required', 'error');
+    if (formData.authorized_email && !formData.authorized_email.endsWith('@iiitdm.ac.in'))
+      return toast('Email must be @iiitdm.ac.in', 'error');
+    if (formData.authorized_email && !formData.org_slug)
+      return toast('Org slug is required when email is set', 'error');
 
     try {
-      let response;
       let clubId = dialog.club?.club_id;
 
-      // First create/update the club
       if (dialog.mode === 'add') {
-        response = await fetch('/admin/api/clubs', {
+        const res = await fetch('/admin/api/clubs', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: formData.name
-          })
+            name: formData.name,
+            authorized_email: formData.authorized_email,
+            org_slug: formData.org_slug,
+          }),
         });
-        
-        if (response.ok) {
-          const data = await response.json();
-          clubId = data.club.club_id;
-        }
+        if (!res.ok) throw new Error((await res.json()).error || 'Failed to add');
+        clubId = (await res.json()).club.club_id;
       } else {
-        response = await fetch('/admin/api/clubs', {
+        const res = await fetch('/admin/api/clubs', {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             club_id: dialog.club!.club_id,
-            name: formData.name
-          })
+            name: formData.name,
+            authorized_email: formData.authorized_email,
+            org_slug: formData.org_slug,
+          }),
         });
+        if (!res.ok) throw new Error((await res.json()).error || 'Failed to update');
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${dialog.mode} club`);
-      }
-
-      // Upload image if provided
-      let finalIconUrl = formData.iconUrl;
+      // Upload image and patch iconUrl
       if (imageFile && clubId) {
-        try {
-          finalIconUrl = await handleImageUpload(clubId);
-          
-          // Update club with new icon URL
+        const url = await uploadImage(clubId);
+        if (url) {
           await fetch('/admin/api/clubs', {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              club_id: clubId,
-              iconUrl: finalIconUrl
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ club_id: clubId, iconUrl: url }),
           });
-        } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          // Continue without image if upload fails
         }
       }
 
-      setSnackbar({
-        open: true,
-        message: `Club ${dialog.mode === 'add' ? 'added' : 'updated'} successfully`,
-        severity: 'success'
-      });
+      toast(`Club ${dialog.mode === 'add' ? 'added' : 'updated'} successfully`);
       setDialog({ open: false, mode: 'add', club: null });
       fetchClubs();
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error instanceof Error ? error.message : `Error ${dialog.mode === 'add' ? 'adding' : 'updating'} club`,
-        severity: 'error'
-      });
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     }
-  };
-
-  const handleDialogClose = () => {
-    setDialog({ open: false, mode: 'add', club: null });
-    setImageFile(null);
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
   }
+
+  if (loading) return <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>;
 
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h6">Clubs Management</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleAdd}
-        >
-          Add Club
-        </Button>
+        <Box>
+          <Typography variant="h6" fontWeight={700}>Clubs Management</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Each club can have one authorized email — they get org-admin access on login.
+          </Typography>
+        </Box>
+        <Button variant="contained" startIcon={<Add />} onClick={openAdd}>Add Club</Button>
       </Box>
+
+      {clubs.length === 0 && (
+        <Typography color="text.secondary" textAlign="center" py={4}>No clubs yet.</Typography>
+      )}
 
       <Grid container spacing={3}>
         {clubs.map((club) => (
           <Grid item xs={12} sm={6} md={4} key={club.club_id}>
-            <Card>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               {club.iconUrl && (
-                <CardMedia
-                  component="img"
-                  height="140"
-                  image={club.iconUrl}
-                  alt={club.name}
-                  sx={{ objectFit: 'contain' }}
-                />
+                <CardMedia component="img" height="120" image={club.iconUrl} alt={club.name}
+                  sx={{ objectFit: 'contain', pt: 1 }} />
               )}
-              <CardContent>
-                <Typography variant="h6" component="div" gutterBottom>
-                  {club.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  ID: {club.club_id}
-                </Typography>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" fontWeight={700} gutterBottom>{club.name}</Typography>
+                {club.org_slug && (
+                  <Chip label={club.org_slug} size="small" variant="outlined" sx={{ mb: 0.5, mr: 0.5 }} />
+                )}
+                {club.authorized_email ? (
+                  <Typography variant="body2" color="text.secondary" fontSize="0.78rem">
+                    {club.authorized_email}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="warning.main" fontSize="0.78rem">
+                    No authorized email set
+                  </Typography>
+                )}
               </CardContent>
               <CardActions>
-                <Button
-                  size="small"
-                  startIcon={<Edit />}
-                  onClick={() => handleEdit(club)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  color="error"
-                  startIcon={<Delete />}
-                  onClick={() => handleDelete(club.club_id)}
-                >
+                <Button size="small" startIcon={<Edit />} onClick={() => openEdit(club)}>Edit</Button>
+                <Button size="small" color="error" startIcon={<Delete />} onClick={() => handleDelete(club.club_id)}>
                   Delete
                 </Button>
               </CardActions>
@@ -333,81 +190,60 @@ export default function ClubsManagement() {
         ))}
       </Grid>
 
-      {/* Add/Edit Club Dialog */}
-      <Dialog open={dialog.open} onClose={handleDialogClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {dialog.mode === 'add' ? 'Add New Club' : 'Edit Club'}
-        </DialogTitle>
+      <Dialog open={dialog.open} onClose={() => setDialog({ ...dialog, open: false })} maxWidth="sm" fullWidth>
+        <DialogTitle fontWeight={700}>{dialog.mode === 'add' ? 'Add Club' : 'Edit Club'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              fullWidth
-              label="Club Name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-              sx={{ mb: 2 }}
+              fullWidth required label="Club Name" value={formData.name}
+              onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
             />
-            
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Club Icon
-              </Typography>
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="icon-upload"
-                type="file"
-                onChange={handleFileChange}
-              />
+            <TextField
+              fullWidth label="Authorized Email" value={formData.authorized_email}
+              onChange={(e) => setFormData(p => ({ ...p, authorized_email: e.target.value }))}
+              placeholder="csclub@iiitdm.ac.in"
+              helperText="This email gets org-admin access to manage this club's events & achievements"
+            />
+            <TextField
+              fullWidth label="Org Slug" value={formData.org_slug}
+              onChange={(e) => setFormData(p => ({ ...p, org_slug: e.target.value }))}
+              placeholder="clubs/cs"
+              helperText="URL path segment e.g. clubs/cs, teams/nira, societies/ieee"
+            />
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>Club Logo</Typography>
+              <input accept="image/*" style={{ display: 'none' }} id="icon-upload" type="file"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setImageFile(f); }} />
               <label htmlFor="icon-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<Upload />}
-                  disabled={uploading}
-                >
-                  {imageFile ? imageFile.name : 'Upload Icon'}
+                <Button variant="outlined" component="span" startIcon={<Upload />} disabled={uploading}>
+                  {imageFile ? imageFile.name : 'Upload Logo'}
                 </Button>
               </label>
               {uploading && <CircularProgress size={20} sx={{ ml: 2 }} />}
             </Box>
-
             {(formData.iconUrl || imageFile) && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Preview:
-                </Typography>
-                <Image
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>Preview:</Typography>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={imageFile ? URL.createObjectURL(imageFile) : formData.iconUrl}
                   alt="Preview"
-                  style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'contain' }}
+                  style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain', display: 'block' }}
                 />
               </Box>
             )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={uploading}>
-            {dialog.mode === 'add' ? 'Add' : 'Update'}
+          <Button onClick={() => setDialog({ ...dialog, open: false })}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={uploading}>
+            {dialog.mode === 'add' ? 'Add Club' : 'Update'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
+      <Snackbar open={snack.open} autoHideDuration={5000} onClose={() => setSnack(s => ({ ...s, open: false }))}>
+        <Alert severity={snack.severity} onClose={() => setSnack(s => ({ ...s, open: false }))}>{snack.message}</Alert>
       </Snackbar>
     </>
   );

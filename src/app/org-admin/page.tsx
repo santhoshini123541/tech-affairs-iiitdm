@@ -1,67 +1,64 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Typography,
-  Box,
-  Avatar,
-  Drawer,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Chip,
-  IconButton,
-  useTheme,
-  alpha,
+  Box, Typography, Avatar, Drawer, List, ListItemButton, ListItemIcon,
+  ListItemText, Divider, Chip, IconButton, useTheme, alpha, CircularProgress,
 } from '@mui/material';
 import {
   Event as EventIcon,
-  Groups as GroupsIcon,
-  AdminPanelSettings as AdminIcon,
   EmojiEvents as TrophyIcon,
   Home as HomeIcon,
   Logout as LogoutIcon,
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import EventsManagement from './EventsManagement';
-import ClubsManagement from './ClubsManagement';
-import OrgAdminsManagement from './OrgAdminsManagement';
-import AchievementsManagement from './AchievementsManagement';
-import { User } from '@/lib/server/user';
+import EventsTab from './EventsTab';
+import AchievementsTab from './AchievementsTab';
+import { clubs, teams, societies, communities } from '@/data/orgs';
+import type { OrgItem } from '@/data/orgs';
 
 const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED = 72;
 
 const NAV_ITEMS = [
-  { label: 'Events',       icon: <EventIcon />,  },
-  { label: 'Clubs',        icon: <GroupsIcon />, },
-  { label: 'Org Admins',   icon: <AdminIcon />,  },
-  { label: 'Achievements', icon: <TrophyIcon />, },
+  { label: 'Events',       icon: <EventIcon /> },
+  { label: 'Achievements', icon: <TrophyIcon /> },
 ];
 
-export default function AdminPage() {
+function resolveOrg(slug: string): OrgItem | null {
+  const all = [...clubs, ...teams, ...societies, ...communities];
+  return all.find((o) => o.link.endsWith('/' + slug.split('/').pop())) ?? null;
+}
+
+interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  picture: string;
+  role: string;
+  orgSlugs: string[];
+}
+
+export default function OrgAdminPage() {
   const router = useRouter();
   const theme = useTheme();
-  const [tab, setTab] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/me').then(async (res) => {
-      if (res.ok) {
-        const u = await res.json();
-        if (u.role !== 'A') { router.push('/'); return; }
-        setUser(u);
-      } else {
-        router.push('/login');
-      }
+    (async () => {
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) { router.push('/login'); return; }
+      const data: AuthUser = await res.json();
+      if (data.role === 'A') { router.push('/admin'); return; }
+      if (data.role !== 'O' || data.orgSlugs.length === 0) { router.push('/'); return; }
+      setUser(data);
       setLoading(false);
-    }).catch(() => { router.push('/'); setLoading(false); });
+    })();
   }, [router]);
 
   if (loading) {
@@ -74,7 +71,7 @@ export default function AdminPage() {
             animation: 'spin 0.8s linear infinite', mx: 'auto', mb: 2,
             '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
           }} />
-          <Typography color="text.secondary" fontSize="0.875rem">Loading dashboard…</Typography>
+          <Typography color="text.secondary" fontSize="0.875rem">Loading…</Typography>
         </Box>
       </Box>
     );
@@ -82,6 +79,7 @@ export default function AdminPage() {
 
   if (!user) return null;
 
+  const orgInfo = resolveOrg(user.orgSlugs[0]);
   const drawerWidth = collapsed ? DRAWER_COLLAPSED : DRAWER_WIDTH;
 
   return (
@@ -111,16 +109,23 @@ export default function AdminPage() {
         }}>
           {!collapsed && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box
-                component="img"
-                src="/ta-logo-dark.webp"
-                alt="TA"
-                sx={{ width: 32, height: 32, objectFit: 'contain' }}
-                onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.style.display = 'none'; }}
-              />
+              {orgInfo ? (
+                <Box component="img" src={orgInfo.image} alt={orgInfo.name}
+                  sx={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 1 }}
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.style.display = 'none'; }}
+                />
+              ) : (
+                <Box sx={{ width: 32, height: 32, borderRadius: 1, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography fontSize="0.75rem" fontWeight={800} color="#fff">
+                    {(orgInfo as OrgItem | null)?.name?.[0] ?? user.orgSlugs[0]?.[0]?.toUpperCase()}
+                  </Typography>
+                </Box>
+              )}
               <Box>
-                <Typography fontWeight={800} fontSize="0.9rem" lineHeight={1.1}>Admin</Typography>
-                <Typography fontSize="0.7rem" color="text.secondary" lineHeight={1.1}>Technical Affairs</Typography>
+                <Typography fontWeight={800} fontSize="0.9rem" lineHeight={1.1} noWrap>
+                  {orgInfo?.name ?? user.orgSlugs[0]}
+                </Typography>
+                <Typography fontSize="0.7rem" color="text.secondary" lineHeight={1.1}>Org Dashboard</Typography>
               </Box>
             </Box>
           )}
@@ -140,8 +145,7 @@ export default function AdminPage() {
                 key={item.label}
                 onClick={() => setTab(i)}
                 sx={{
-                  borderRadius: 2,
-                  mb: 0.5,
+                  borderRadius: 2, mb: 0.5,
                   px: collapsed ? 1.5 : 2,
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   minHeight: 44,
@@ -153,11 +157,7 @@ export default function AdminPage() {
                   transition: 'all 0.15s',
                 }}
               >
-                <ListItemIcon sx={{
-                  minWidth: collapsed ? 0 : 36,
-                  color: 'inherit',
-                  justifyContent: 'center',
-                }}>
+                <ListItemIcon sx={{ minWidth: collapsed ? 0 : 36, color: 'inherit', justifyContent: 'center' }}>
                   {item.icon}
                 </ListItemIcon>
                 {!collapsed && (
@@ -184,15 +184,12 @@ export default function AdminPage() {
               p: 1.5, borderRadius: 2,
               bgcolor: alpha(theme.palette.text.primary, 0.04),
             }}>
-              <Avatar
-                src={(user as unknown as { picture?: string }).picture}
-                sx={{ width: 36, height: 36, fontSize: '0.85rem' }}
-              >
+              <Avatar src={user.picture} sx={{ width: 36, height: 36, fontSize: '0.85rem' }}>
                 {user.name?.[0]}
               </Avatar>
               <Box sx={{ overflow: 'hidden' }}>
                 <Typography fontSize="0.8rem" fontWeight={600} noWrap>{user.name}</Typography>
-                <Chip label="Super Admin" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem', mt: 0.25 }} />
+                <Chip label="Org Admin" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem', mt: 0.25 }} />
               </Box>
             </Box>
           )}
@@ -242,14 +239,11 @@ export default function AdminPage() {
               {NAV_ITEMS[tab].label}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Technical Affairs Admin Dashboard
+              {orgInfo?.name ?? user.orgSlugs[0]} · Org Admin Dashboard
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar
-              src={(user as unknown as { picture?: string }).picture}
-              sx={{ width: 34, height: 34, fontSize: '0.8rem' }}
-            >
+            <Avatar src={user.picture} sx={{ width: 34, height: 34, fontSize: '0.8rem' }}>
               {user.name?.[0]}
             </Avatar>
           </Box>
@@ -257,10 +251,8 @@ export default function AdminPage() {
 
         {/* Page content */}
         <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, overflowY: 'auto' }}>
-          {tab === 0 && <EventsManagement />}
-          {tab === 1 && <ClubsManagement />}
-          {tab === 2 && <OrgAdminsManagement />}
-          {tab === 3 && <AchievementsManagement />}
+          {tab === 0 && <EventsTab clubId={0} />}
+          {tab === 1 && <AchievementsTab orgSlugs={user.orgSlugs} />}
         </Box>
       </Box>
     </Box>

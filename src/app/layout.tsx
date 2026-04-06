@@ -9,8 +9,7 @@ import './globals.css'
 import { Bricolage_Grotesque } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ReactLenis } from 'lenis/react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import ConditionalShell from '@/components/ConditionalShell';
 import { getCurrentSession } from '@/lib/server/session';
 import { GridsBg } from '@/components/GridsBg';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -35,9 +34,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <GridsBg />
           <ScrollToTop />
           <ScrollToTopButton />
-          <Navbar user={user} />
-          {children}
-          <Footer />
+          <ConditionalShell user={user}>
+            {children}
+          </ConditionalShell>
         </ThemeProvider>
       </body>
     </html>
